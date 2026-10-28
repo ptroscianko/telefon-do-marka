@@ -3,14 +3,12 @@ import google.generativeai as genai
 import json
 import os
 
-# Konfiguracja interfejsu
 st.set_page_config(page_title="Telefon do Marka", page_icon="📞", layout="wide")
 st.title("📞 Telefon do Marka (Trening SPIN)")
 
-# Pobranie bezpiecznego klucza API z sekretów serwera
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
-    st.error("Brak klucza API. Ustaw GEMINI_API_KEY w ustawieniach serwera (Secrets).")
+    st.error("Brak klucza API. Ustaw GEMINI_API_KEY w ustawieniach zaawansowanych (Secrets).")
     st.stop()
 
 genai.configure(api_key=API_KEY)
@@ -55,19 +53,15 @@ model = genai.GenerativeModel(
     generation_config={"response_mime_type": "application/json"}
 )
 
-# Inicjalizacja pamięci czatu i statystyk
 if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
-    # Wymuszenie startu zgodnie z wytycznymi
     st.session_state.chat.send_message("Rozpocznij jako JSON. Czekam na pierwszą wiadomość.")
-    
     st.session_state.messages = [{"role": "assistant", "content": "Halo, Kowal-Instal, słucham?"}]
     st.session_state.counts = {"S": 0, "P": 0, "I": 0, "N": 0, "OFERTA": 0, "INNE": 0}
     st.session_state.openness = 20
     st.session_state.stage = 0
     st.session_state.last_label = "-"
 
-# Interfejs statystyk (górny pasek)
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("S (Sytuacja)", st.session_state.counts.get("S", 0))
 col2.metric("P (Problem)", st.session_state.counts.get("P", 0))
@@ -79,12 +73,10 @@ col6.metric("Ostatni typ", st.session_state.last_label)
 st.progress(st.session_state.openness / 100, text=f"Otwartość klienta: {st.session_state.openness}% (Etap: {st.session_state.stage}/3)")
 st.divider()
 
-# Rysowanie historii czatu
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Pole tekstowe dla doradcy
 prompt = st.chat_input("Wpisz swoją kwestię (lub napisz STOP, aby ocenić)...")
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -99,7 +91,6 @@ if prompt:
             odpowiedz = data.get("odpowiedz", "Błąd parsowania.")
             etykieta = data.get("etykieta", "INNE")
             
-            # Aktualizacja liczników i paska postępu
             if etykieta in st.session_state.counts:
                 st.session_state.counts[etykieta] += 1
             st.session_state.last_label = etykieta
