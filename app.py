@@ -53,15 +53,24 @@ model = genai.GenerativeModel(
     generation_config={"response_mime_type": "application/json"}
 )
 
+from google.api_core.exceptions import ResourceExhausted
+import time
+
 if "chat" not in st.session_state:
     st.session_state.chat = model.start_chat(history=[])
-    st.session_state.chat.send_message("Rozpocznij jako JSON. Czekam na pierwszą wiadomość.")
+    
+    try:
+        # Dajemy małą przerwę i próbujemy wysłać wiadomość startową
+        time.sleep(1)
+        st.session_state.chat.send_message("Rozpocznij jako JSON. Czekam na pierwszą wiadomość.")
+    except ResourceExhausted:
+        st.error("⚠️ Wyczerpano darmowy limit zapytań do Google API (ResourceExhausted). Odczekaj około minuty i odśwież stronę.")
+    
     st.session_state.messages = [{"role": "assistant", "content": "Halo, Kowal-Instal, słucham?"}]
     st.session_state.counts = {"S": 0, "P": 0, "I": 0, "N": 0, "OFERTA": 0, "INNE": 0}
     st.session_state.openness = 20
     st.session_state.stage = 0
     st.session_state.last_label = "-"
-
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("S (Sytuacja)", st.session_state.counts.get("S", 0))
 col2.metric("P (Problem)", st.session_state.counts.get("P", 0))
